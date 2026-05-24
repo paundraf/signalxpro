@@ -1,26 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SignalX Pro</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+margin:0;
+background:#000;
+font-family:Arial,sans-serif;
+color:white;
+}
+
+.container{
+max-width:1400px;
+margin:auto;
+padding:20px;
+}
+
+.logo{
+font-size:42px;
+font-weight:bold;
+color:#facc15;
+}
+
+.tagline{
+color:#888;
+margin-top:5px;
+}
+
+.topbar{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+select{
+background:#111;
+color:white;
+border:1px solid #333;
+padding:12px;
+border-radius:12px;
+}
+
+.card{
+background:#111;
+padding:25px;
+border-radius:24px;
+border:1px solid #222;
+margin-top:20px;
+}
+
+.signal-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin-top:20px;
+}
+
+.signal{
+background:#0b0b0b;
+padding:20px;
+border-radius:20px;
+border:1px solid #333;
+}
+
+.buy{
+color:#22c55e;
+font-size:28px;
+font-weight:bold;
+}
+
+.sell{
+color:#ef4444;
+font-size:28px;
+font-weight:bold;
+}
+
+.hold{
+color:#facc15;
+font-size:28px;
+font-weight:bold;
+}
+
+.price{
+font-size:40px;
+font-weight:bold;
+color:#facc15;
+margin-top:10px;
+}
+
+.warning{
+background:#3b0000;
+padding:14px;
+border-radius:14px;
+margin-top:20px;
+color:#ffb3b3;
+}
+
+.info{
+background:#00253b;
+padding:14px;
+border-radius:14px;
+margin-top:15px;
+color:#8fd3ff;
+}
+
+canvas{
+margin-top:30px;
+}
+
+.footer{
+text-align:center;
+margin-top:40px;
+color:#666;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">
+SignalX Pro
+</div>
+
+<div class="tagline">
+AI Forex & Crypto Signal Platform
+</div>
+
+<div class="topbar">
+
+<select id="pairSelect">
+
+<option value="bitcoin">BTCUSDT</option>
+<option value="ethereum">ETHUSDT</option>
+<option value="solana">SOLUSDT</option>
+<option value="ripple">XRPUSDT</option>
+<option value="tether-gold">XAUUSD</option>
+
+</select>
+
+<select id="timeframe">
+
+<option>15M</option>
+<option>1H</option>
+<option>4H</option>
+
+</select>
+
+<select id="chartType">
+
+<option value="line">Line Chart</option>
+<option value="bar">Candlestick Style</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>Realtime Market</h2>
+
+<div class="price" id="livePrice">
+Loading...
+</div>
+
+<div id="signalType" class="buy">
+BUY
+</div>
+
+<div class="signal-grid">
+
+<div class="signal">
+<h3>Signal</h3>
+<p id="signalText">Strong Buy</p>
+</div>
+
+<div class="signal">
+<h3>Market</h3>
+<p id="marketText">Bullish</p>
+</div>
+
+<div class="signal">
+<h3>Action</h3>
+<p id="actionText">Hold Position</p>
+</div>
+
+<div class="signal">
+<h3>Entry</h3>
+<p id="entryPrice">-</p>
+</div>
+
+<div class="signal">
+<h3>Take Profit</h3>
+<p id="tpPrice">-</p>
+</div>
+
+<div class="signal">
+<h3>Stop Loss</h3>
+<p id="slPrice">-</p>
+</div>
+
+<div class="signal">
+<h3>Risk Reward</h3>
+<p id="rrBox">-</p>
+</div>
+
+</div>
+
+<div class="warning" id="warningBox">
+⚠ High volatility detected
+</div>
+
+<div class="info" id="infoBox">
+📈 Market stable
+</div>
+
+<canvas id="chart"></canvas>
+
+</div>
+
+<div class="footer">
+© 2026 SignalX Pro — Global Trading Platform
+</div>
+
+</div>
+
 <script>
-
-const pairMap = {
-
-bitcoin:'BTCUSDT',
-ethereum:'ETHUSDT',
-solana:'SOLUSDT',
-ripple:'XRPUSDT',
-'tether-gold':'XAUUSD',
-
-};
-
-const ctx =
-document.getElementById('chart');
 
 const labels = [];
 const prices = [];
 
-let chartType = 'line';
+const ctx =
+document.getElementById('chart');
 
 const chart = new Chart(ctx, {
 
-type: chartType,
+type:'line',
 
 data:{
 
@@ -28,7 +253,7 @@ labels:labels,
 
 datasets:[{
 
-label:'Live Market',
+label:'Price',
 
 data:prices,
 
@@ -47,13 +272,11 @@ options:{
 responsive:true,
 
 plugins:{
-
 legend:{
 labels:{
 color:'white'
 }
 }
-
 },
 
 scales:{
@@ -81,6 +304,11 @@ async function loadPrice(){
 const pair =
 document.getElementById('pairSelect').value;
 
+const chartType =
+document.getElementById('chartType').value;
+
+chart.config.type = chartType;
+
 try{
 
 const response = await fetch(
@@ -89,9 +317,11 @@ const response = await fetch(
 '&vs_currencies=usd'
 );
 
-const data = await response.json();
+const data =
+await response.json();
 
-const price = data[pair].usd;
+const price =
+data[pair].usd;
 
 document.getElementById('livePrice').innerHTML =
 '$' + Number(price).toLocaleString();
@@ -136,12 +366,6 @@ document.getElementById('marketText');
 const actionText =
 document.getElementById('actionText');
 
-const warningBox =
-document.getElementById('warningBox');
-
-const infoBox =
-document.getElementById('infoBox');
-
 const entryBox =
 document.getElementById('entryPrice');
 
@@ -154,8 +378,17 @@ document.getElementById('slPrice');
 const rrBox =
 document.getElementById('rrBox');
 
+const warningBox =
+document.getElementById('warningBox');
+
+const infoBox =
+document.getElementById('infoBox');
+
 const tf =
 document.getElementById('timeframe').value;
+
+const random =
+Math.random();
 
 let entry =
 Number(price);
@@ -163,16 +396,13 @@ Number(price);
 let tp;
 let sl;
 
-const random =
-Math.random();
-
-if(random > 0.65){
+if(random > 0.66){
 
 signalType.className='buy';
 signalType.innerHTML='BUY';
 
 signalText.innerHTML=
-'Strong Buy Signal';
+'Strong Buy';
 
 marketText.innerHTML=
 'Bullish Momentum';
@@ -181,23 +411,23 @@ actionText.innerHTML=
 'Hold Until TP';
 
 tp = entry * 1.015;
-sl = entry * 0.992;
+sl = entry * 0.993;
 
 warningBox.innerHTML =
-'⚠ Potential breakout in next few candles';
+'⚠ Possible breakout movement';
 
 infoBox.innerHTML =
 '📈 Trend strong on ' + tf;
 
 }
 
-else if(random > 0.35){
+else if(random > 0.33){
 
 signalType.className='sell';
 signalType.innerHTML='SELL';
 
 signalText.innerHTML=
-'Strong Sell Signal';
+'Strong Sell';
 
 marketText.innerHTML=
 'Bearish Pressure';
@@ -209,7 +439,7 @@ tp = entry * 0.985;
 sl = entry * 1.008;
 
 warningBox.innerHTML =
-'⚠ High volatility / news impact detected';
+'⚠ News volatility detected';
 
 infoBox.innerHTML =
 '📉 Downtrend active on ' + tf;
@@ -222,7 +452,7 @@ signalType.className='hold';
 signalType.innerHTML='HOLD';
 
 signalText.innerHTML=
-'Sideways Market';
+'Sideways';
 
 marketText.innerHTML=
 'Low Volume';
@@ -234,10 +464,10 @@ tp = entry * 1.004;
 sl = entry * 0.997;
 
 warningBox.innerHTML =
-'⚠ Sideways detected. Avoid entry';
+'⚠ Sideways market detected';
 
 infoBox.innerHTML =
-'📢 Market ranging';
+'📢 Avoid entry';
 
 }
 
@@ -257,55 +487,61 @@ Math.abs(entry-sl);
 rrBox.innerHTML =
 '1 : ' + rr.toFixed(2);
 
-drawEntryLine(entry,tp,sl);
+drawLines(entry,tp,sl);
 
 }
 
-function drawEntryLine(entry,tp,sl){
+function drawLines(entry,tp,sl){
 
 chart.data.datasets = [
 
 {
 label:'Market',
+
 data:prices,
+
 borderWidth:2,
+
 tension:0.3,
+
 pointRadius:0
+
 },
 
 {
 label:'Entry',
+
 data:new Array(labels.length).fill(entry),
+
 borderWidth:1,
+
 pointRadius:0
+
 },
 
 {
 label:'TP',
+
 data:new Array(labels.length).fill(tp),
+
 borderWidth:1,
+
 pointRadius:0
+
 },
 
 {
 label:'SL',
+
 data:new Array(labels.length).fill(sl),
+
 borderWidth:1,
+
 pointRadius:0
+
 }
 
 ];
-
-chart.update();
-
-}
-
-function changeChart(){
-
-const type =
-document.getElementById('chartType').value;
-
-chart.config.type = type;
 
 chart.update();
 
@@ -316,3 +552,6 @@ loadPrice();
 setInterval(loadPrice,5000);
 
 </script>
+
+</body>
+</html>
