@@ -1,3 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SignalX Pro</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+margin:0;
+background:#000;
+font-family:Arial,sans-serif;
+color:white;
+}
+
+.container{
+max-width:1400px;
+margin:auto;
+padding:20px;
+}
+
+.logo{
+font-size:42px;
+font-weight:bold;
+color:#facc15;
+}
+
+.tagline{
+color:#888;
+margin-top:5px;
+}
+
+.topbar{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+select{
+background:#111;
+color:white;
+border:1px solid #333;
+padding:12px;
+border-radius:12px;
+}
+
+.card{
+background:#111;
+padding:25px;
+border-radius:24px;
+border:1px solid #222;
+margin-top:20px;
+}
+
+.signal-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin-top:20px;
+}
+
+.signal{
+background:#0b0b0b;
+padding:20px;
+border-radius:20px;
+border:1px solid #333;
+}
+
+.buy{
+color:#22c55e;
+font-size:28px;
+font-weight:bold;
+}
+
+.sell{
+color:#ef4444;
+font-size:28px;
+font-weight:bold;
+}
+
+.hold{
+color:#facc15;
+font-size:28px;
+font-weight:bold;
+}
+
+.price{
+font-size:42px;
+font-weight:bold;
+color:#facc15;
+margin-top:10px;
+}
+
+.warning{
+background:#3b0000;
+padding:14px;
+border-radius:14px;
+margin-top:20px;
+color:#ffb3b3;
+}
+
+.info{
+background:#00253b;
+padding:14px;
+border-radius:14px;
+margin-top:15px;
+color:#8fd3ff;
+}
+
+.footer{
+margin-top:40px;
+text-align:center;
+color:#666;
+}
+
+canvas{
+margin-top:30px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">
+SignalX Pro
+</div>
+
+<div class="tagline">
+Professional Forex & Crypto Trading Signals
+</div>
+
+<div class="topbar">
+
+<select id="pairSelect">
+
+<option value="bitcoin">BTCUSDT</option>
+<option value="ethereum">ETHUSDT</option>
+<option value="solana">SOLUSDT</option>
+<option value="ripple">XRPUSDT</option>
+<option value="tether-gold">XAUUSD</option>
+
+</select>
+
+<select id="timeframe">
+
+<option>15M</option>
+<option>1H</option>
+<option>4H</option>
+
+</select>
+
+<select id="chartType">
+
+<option value="line">Line Chart</option>
+<option value="bar">Candlestick Style</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>Realtime Market</h2>
+
+<div class="price" id="livePrice">
+Loading...
+</div>
+
+<div id="signalType" class="buy">
+BUY STOP
+</div>
+
+<div class="signal-grid">
+
+<div class="signal">
+<h3>Signal</h3>
+<p id="signalText">Strong Signal</p>
+</div>
+
+<div class="signal">
+<h3>Market</h3>
+<p id="marketText">Bullish</p>
+</div>
+
+<div class="signal">
+<h3>Action</h3>
+<p id="actionText">Wait Entry</p>
+</div>
+
+<div class="signal">
+<h3>Entry</h3>
+<p id="entryPrice">-</p>
+</div>
+
+<div class="signal">
+<h3>Take Profit</h3>
+<p id="tpPrice">-</p>
+</div>
+
+<div class="signal">
+<h3>Stop Loss</h3>
+<p id="slPrice">-</p>
+</div>
+
+<div class="signal">
+<h3>Risk Reward</h3>
+<p id="rrBox">-</p>
+</div>
+
+<div class="signal">
+<h3>Valid</h3>
+<p id="validBox">-</p>
+</div>
+
+</div>
+
+<div class="warning" id="warningBox">
+⚠ Wait candle confirmation before entry
+</div>
+
+<div class="info" id="infoBox">
+📈 Intraday low-risk setup
+</div>
+
+<canvas id="chart"></canvas>
+
+</div>
+
+<div class="card">
+
+<h2>Signal History</h2>
+
+<div class="signal-grid" id="historyBox">
+
+</div>
+
+</div>
+
+<div class="footer">
+© 2026 SignalX Pro — AI Trading Platform
+</div>
+
+</div>
+
+<script>
+
+const labels = [];
+const prices = [];
+
+let activeSignal = null;
+let signalExpire = 0;
+
+const ctx =
+document.getElementById('chart');
+
+const chart = new Chart(ctx, {
+
+type:'line',
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:'Market',
+
+data:prices,
+
+borderWidth:2,
+
+tension:0.3,
+
+pointRadius:0
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+legend:{
+labels:{
+color:'white'
+}
+}
+},
+
+scales:{
+
+x:{
+ticks:{
+color:'white'
+}
+},
+
+y:{
+ticks:{
+color:'white'
+}
+}
+
+}
+
+}
+
+});
+
+async function loadPrice(){
+
+const pair =
+document.getElementById('pairSelect').value;
+
+const chartType =
+document.getElementById('chartType').value;
+
+chart.config.type = chartType;
+
+try{
+
+const response = await fetch(
+'https://api.coingecko.com/api/v3/simple/price?ids='
++ pair +
+'&vs_currencies=usd'
+);
+
+const data =
+await response.json();
+
+const price =
+data[pair].usd;
+
+document.getElementById('livePrice').innerHTML =
+'$' + Number(price).toLocaleString();
+
+const time =
+new Date().toLocaleTimeString();
+
+labels.push(time);
+prices.push(price);
+
+if(labels.length > 30){
+
+labels.shift();
+prices.shift();
+
+}
+
+chart.update();
+
+generateSignal(price);
+
+}catch(e){
+
+document.getElementById('livePrice').innerHTML =
+'Realtime Offline';
+
+}
+
+}
+
+function generateSignal(price){
+
+const now = Date.now();
+
+if(activeSignal && now < signalExpire){
+
+updateUI(activeSignal);
+return;
+
+}
+
+const tf =
+document.getElementById('timeframe').value;
+
+const signalTypes = [
+
+'BUY STOP',
+'SELL STOP',
+'BUY LIMIT',
+'SELL LIMIT'
+
+];
+
+const randomSignal =
+signalTypes[
+Math.floor(Math.random()*signalTypes.length)
+];
+
+let entry,tp,sl;
+
+entry = Number(price);
+
+if(randomSignal === 'BUY STOP'){
+
+entry = price * 1.002;
+tp = entry * 1.018;
+sl = entry * 0.994;
+
+}
+
+if(randomSignal === 'SELL STOP'){
+
+entry = price * 0.998;
+tp = entry * 0.982;
+sl = entry * 1.006;
+
+}
+
+if(randomSignal === 'BUY LIMIT'){
+
+entry = price * 0.996;
+tp = entry * 1.015;
+sl = entry * 0.992;
+
+}
+
+if(randomSignal === 'SELL LIMIT'){
+
+entry = price * 1.004;
+tp = entry * 0.985;
+sl = entry * 1.008;
+
+}
+
+const rr =
+Math.abs(tp-entry) /
+Math.abs(entry-sl);
+
+let validHours = 2;
+
+if(tf === '4H'){
+validHours = 4;
+}
+
+if(tf === '1H'){
+validHours = 2;
+}
+
+if(tf === '15M'){
+validHours = 1;
+}
+
+activeSignal = {
+
+type: randomSignal,
+entry: entry,
+tp: tp,
+sl: sl,
+rr: rr,
+valid: validHours
+
+};
+
+signalExpire =
+now + (validHours * 60 * 60 * 1000);
+
+updateUI(activeSignal);
+
+}
+
+function updateUI(signal){
+
+const signalType =
+document.getElementById('signalType');
+
+const signalText =
+document.getElementById('signalText');
+
+const marketText =
+document.getElementById('marketText');
+
+const actionText =
+document.getElementById('actionText');
+
+const entryBox =
+document.getElementById('entryPrice');
+
+const tpBox =
+document.getElementById('tpPrice');
+
+const slBox =
+document.getElementById('slPrice');
+
+const rrBox =
+document.getElementById('rrBox');
+
+const validBox =
+document.getElementById('validBox');
+
+const warningBox =
+document.getElementById('warningBox');
+
+const infoBox =
+document.getElementById('infoBox');
+
+signalType.innerHTML =
+signal.type;
+
+if(signal.type.includes('BUY')){
+
+signalType.className='buy';
+
+marketText.innerHTML =
+'Bullish Setup';
+
+actionText.innerHTML =
+'Hold Until TP';
+
+}
+
+else{
+
+signalType.className='sell';
+
+marketText.innerHTML =
+'Bearish Setup';
+
+actionText.innerHTML =
+'Wait Sell Entry';
+
+}
+
+signalText.innerHTML =
+'Intraday Signal';
+
+entryBox.innerHTML =
+'$' + signal.entry.toLocaleString();
+
+tpBox.innerHTML =
+'$' + signal.tp.toLocaleString();
+
+slBox.innerHTML =
+'$' + signal.sl.toLocaleString();
+
+rrBox.innerHTML =
+'1 : ' + signal.rr.toFixed(2);
+
+validBox.innerHTML =
+signal.valid + ' Hours';
+
+warningBox.innerHTML =
+'⚠ Avoid entry before candle confirmation';
+
+infoBox.innerHTML =
+'📈 Stable setup • Low risk • Trend follow';
+
+drawLines(
+signal.entry,
+signal.tp,
+signal.sl
+);
+
+saveHistory(signal);
+
+}
+
+function drawLines(entry,tp,sl){
+
+chart.data.datasets = [
+
+{
+label:'Market',
+
+data:prices,
+
+borderWidth:2,
+
+tension:0.3,
+
+pointRadius:0
+
+},
+
+{
+label:'Entry',
+
+data:new Array(labels.length).fill(entry),
+
+borderWidth:1,
+
+pointRadius:0
+
+},
+
+{
+label:'TP',
+
+data:new Array(labels.length).fill(tp),
+
+borderWidth:1,
+
+pointRadius:0
+
+},
+
+{
+label:'SL',
+
+data:new Array(labels.length).fill(sl),
+
+borderWidth:1,
+
+pointRadius:0
+
+}
+
+];
+
+chart.update();
+
+}
+
 function saveHistory(signal){
 
 const historyBox =
@@ -79,9 +706,9 @@ signal.rr.toFixed(2) +
 now +
 '</p>' +
 
-'<p>Status: <b style=\"color:' +
+'<p>Status: <b style="color:' +
 color +
-'\">' +
+'">' +
 result +
 '</b></p>';
 
@@ -96,3 +723,12 @@ historyBox.lastChild
 }
 
 }
+
+loadPrice();
+
+setInterval(loadPrice,5000);
+
+</script>
+
+</body>
+</html>
