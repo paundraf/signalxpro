@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SignalX Pro</title>
+
 <style>
 body{
 margin:0;
@@ -11,25 +12,32 @@ font-family:Arial,sans-serif;
 background:#000;
 color:#fff;
 }
+
 .container{
 max-width:1100px;
 margin:auto;
 padding:20px;
 }
+
 .header{
 display:flex;
 justify-content:space-between;
 align-items:center;
 flex-wrap:wrap;
+margin-bottom:30px;
 }
+
 .logo{
 font-size:42px;
 font-weight:bold;
 color:#facc15;
 }
+
 .tagline{
-color:#aaa;
+color:#999;
+margin-top:5px;
 }
+
 .btn{
 background:#facc15;
 color:#000;
@@ -39,51 +47,73 @@ font-weight:bold;
 text-decoration:none;
 display:inline-block;
 }
+
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 gap:20px;
-margin-top:30px;
+margin-top:20px;
 }
+
 .card{
 background:#111;
 padding:25px;
 border-radius:24px;
 border:1px solid #222;
 }
+
 .signal{
 background:#0b0b0b;
 padding:20px;
 border-radius:20px;
-margin-top:15px;
+margin-top:20px;
 border:1px solid #333;
 }
+
 .buy{
 color:#22c55e;
 font-weight:bold;
+font-size:20px;
 }
+
 .sell{
 color:#ef4444;
 font-weight:bold;
+font-size:20px;
 }
+
+.price{
+color:#facc15;
+font-size:24px;
+font-weight:bold;
+margin-top:10px;
+}
+
 .footer{
 margin-top:40px;
 text-align:center;
-color:#777;
+color:#666;
 }
 </style>
 </head>
+
 <body>
+
 <div class="container">
+
 <div class="header">
 <div>
 <div class="logo">SignalX Pro</div>
-<div class="tagline">Smart Signals. Smarter Profits.</div>
+<div class="tagline">
+Smart Signals. Smarter Profits.
 </div>
-<a href="#" class="btn">Download APK</a>
+</div>
+
+<a href="#" class="btn">LIVE MARKET</a>
 </div>
 
 <div class="grid">
+
 <div class="card">
 <h2>Total Signals</h2>
 <h1>128</h1>
@@ -98,38 +128,53 @@ color:#777;
 <h2>Market Status</h2>
 <h1 style="color:#38bdf8;">LIVE</h1>
 </div>
+
 </div>
 
 <div class="card" style="margin-top:30px;">
-<h2>Live Trading Signals</h2>
+
+<h2>Realtime Trading Signals</h2>
 
 <div class="signal">
-<h3>BTCUSDT</h3>
+<h2>BTCUSDT</h2>
 <div class="buy">BUY</div>
-<p>Entry: 104500</p>
-<p>TP: 105800</p>
-<p>SL: 103900</p>
+
+<div class="price" id="btc-price">
+Loading...
+</div>
+
+<p>Take Profit: Auto</p>
+<p>Stop Loss: Auto</p>
 </div>
 
 <div class="signal">
-<h3>XAUUSD</h3>
+<h2>XAUUSD</h2>
 <div class="sell">SELL</div>
-<p>Entry: 3320</p>
-<p>TP: 3285</p>
-<p>SL: 3338</p>
+
+<div class="price">
+Realtime Gold
+</div>
+
+<p>Take Profit: Auto</p>
+<p>Stop Loss: Auto</p>
 </div>
 
 <div class="signal">
-<h3>EURUSD</h3>
+<h2>EURUSD</h2>
 <div class="buy">BUY</div>
-<p>Entry: 1.0890</p>
-<p>TP: 1.0945</p>
-<p>SL: 1.0865</p>
+
+<div class="price">
+Realtime Forex
+</div>
+
+<p>Take Profit: Auto</p>
+<p>Stop Loss: Auto</p>
 </div>
 
 </div>
 
 <div class="grid">
+
 <div class="card">
 <h2>Realtime Alerts</h2>
 <p>Instant BUY/SELL notifications.</p>
@@ -144,11 +189,42 @@ color:#777;
 <h2>Risk Management</h2>
 <p>Automatic TP & SL protection.</p>
 </div>
+
 </div>
 
 <div class="footer">
 © 2026 SignalX Pro — Global Forex & Crypto Signals
 </div>
+
 </div>
+
+<script>
+async function loadBTC() {
+
+try {
+
+const res = await fetch(
+'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'
+);
+
+const data = await res.json();
+
+document.getElementById('btc-price').innerText =
+'$' + Number(data.price).toLocaleString();
+
+} catch(err){
+
+document.getElementById('btc-price').innerText =
+'Connection Error';
+
+}
+
+}
+
+loadBTC();
+
+setInterval(loadBTC, 3000);
+</script>
+
 </body>
 </html>
